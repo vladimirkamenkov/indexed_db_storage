@@ -1,22 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
+import { MagicLabel } from '../MagicLabel';
+
 export const MagicButton = () => {
+    const [message, setMessage] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const magicHandler = () => {
-        navigator.serviceWorker.controller.postMessage({
-            time: new Date(),
-            text: "Write this text to IDB, please"
-        });
+        if (!loading) {
+            navigator.serviceWorker.controller.postMessage({
+                time: new Date(),
+                text: "Write this text to IDB, please"
+            });
+        }
+        setLoading(true);
     };
+
+    useEffect(() => {
+        navigator.serviceWorker.addEventListener('message', ({ data }) => {
+            if (!data.exceptions.length) {
+                setMessage(data.message);
+                setTimeout(() => {
+                    setMessage(null);
+                    setLoading(false);
+                }, 1000)
+            }
+        });
+    }, []);
 
     return (
         <StyledContainer>
             <StyledButton
                 onClick={magicHandler}
+                disabled={loading}
             >
                 Magic
             </StyledButton>
+            <MagicLabel message={message} />
         </StyledContainer>
     )
 };
